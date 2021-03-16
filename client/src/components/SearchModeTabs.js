@@ -49,7 +49,7 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
-export default function SearchModeTabs() {
+export default function SearchModeTabs({petLikes}) {
     const classes = useStyles();
     const [value, setValue] = React.useState(0);
 
@@ -69,24 +69,23 @@ export default function SearchModeTabs() {
                 </Tabs>
             </AppBar>
             <TabPanel value={value} index={0}>
-                В процессе разработки
-                {/*<List component="nav"  aria-label="main mailbox folders">*/}
-                {/*    {userPets.map((pet,index)=><MyDogListItem*/}
-                {/*        selected={selectedPetIndex === index}*/}
-                {/*        onClick={()=>setSelectedPetIndex(index)}*/}
-                {/*        key={pet.petProfile_id}*/}
-                {/*        name={pet.petName}*/}
-                {/*        birthday={pet.petBirthDate}*/}
-                {/*        sex={pet.isFemine}*/}
-                {/*        image={pet.petAvatar}*/}
-                {/*    />)}*/}
-                {/*</List>*/}
+                В процессе разработки...
             </TabPanel>
             <TabPanel value={value} index={1}>
-                В процессе разработки
+                В процессе разработки...
             </TabPanel>
             <TabPanel value={value} index={2}>
-                В процессе разработки
+                <List component="nav"  aria-label="main mailbox folders">
+                    {petLikes.map((pet,index)=><MyDogListItem
+                        selected={selectedPetIndex === index}
+                        onClick={()=>setSelectedPetIndex(index)}
+                        key={pet.petProfile_id}
+                        name={pet.petName}
+                        birthday={pet.petBirthDate}
+                        sex={pet.isFemine}
+                        image={pet.petAvatar}
+                    />)}
+                </List>
             </TabPanel>
         </div>
     );

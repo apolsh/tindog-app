@@ -19,7 +19,7 @@ const useStyles = makeStyles({
     },
 });
 
-export default function CandidateCard({petName, codeKleimo, numberKleimo, rod_isConfirmed, petBirthDate, onLikeClick, onDislikeClick, avatar }) {
+export default function CandidateCard({petProfile_id, petName, codeKleimo, numberKleimo, rod_isConfirmed, petBirthDate, onLikeClick, onDislikeClick, avatar }) {
     const classes = useStyles();
 
     const birthdayDate = getDefaultDateString(petBirthDate);
@@ -68,7 +68,7 @@ export default function CandidateCard({petName, codeKleimo, numberKleimo, rod_is
                             color="secondary"
                             className={classes.button}
                             startIcon={<FavoriteIcon  />}
-                            onClick={onLikeClick}
+                            onClick={()=>onLikeClick(petProfile_id)}
                         >
                             Нравится
                         </Button>

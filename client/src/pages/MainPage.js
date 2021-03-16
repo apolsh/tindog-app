@@ -27,9 +27,10 @@ import NewDogDialog from "../dialogs/NewDogDialog";
 import Button from "@material-ui/core/Button";
 import {AuthContext} from "../context/AuthContext";
 import {
+    addLike,
     addPetReq,
     citiesDirReq,
-    dogKindsDirReq,
+    dogKindsDirReq, getLikesReq,
     getUserPetsReq,
     searchCandidatesReq,
     userInfoReq
@@ -102,6 +103,7 @@ function MainPage(props) {
     const [petCandidates, setPetCandidates] = React.useState([]);
     const [viewedCandidateIndex, setViewedCandidateIndex] = React.useState(0);
     const [candidatesAreOver, setCandidatesAreOver] = React.useState(false);
+    const [likes, setLikes] = React.useState([]);
 
     const auth = useContext(AuthContext);
 
@@ -220,7 +222,7 @@ function MainPage(props) {
                             /> : null
                         }
                         <Divider/>
-                        <SearchModeTabs/>
+                        <SearchModeTabs petLikes={likes}/>
                     </List>
 
                 </div>
@@ -245,6 +247,9 @@ function MainPage(props) {
         setIsProfileMode(false);
         searchCandidatesReq(selectedPet.petProfile_id, auth.token)
             .then(r => setPetCandidates(r))
+
+        getLikesReq(selectedPet.petProfile_id, auth.token)
+            .then(r => setLikes(r))
     }
 
     const renderSelectedPet = (selectedPet)=>{
@@ -276,7 +281,12 @@ function MainPage(props) {
         }
     }
 
-    const onLikeClick = () => {
+    const onLikeClick = (likeRecieverId) => {
+        const selectedPet = userPets[selectedPetIndex]
+        const likeSenderId = selectedPet.petProfile_id;
+        addLike(likeSenderId, likeRecieverId, auth.token)
+            .then(()=>{})
+            .catch(e=>onError(e.message))
         //set like
         nextCandidate();
     }
@@ -295,6 +305,7 @@ function MainPage(props) {
             }
 
             return (<CandidateCard petName={candidate.petName}
+                                   petProfile_id={candidate.petProfile_id}
                                    codeKleimo={candidate.codeKleimo}
                                    numberKleimo={candidate.numberKleimo}
                                    rod_isConfirmed={candidate.rod_isConfirmed}

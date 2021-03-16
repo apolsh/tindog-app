@@ -145,3 +145,40 @@ export const searchCandidatesReq = async (pet_id, token) => {
 
     })
 }
+
+export const addLike = async (likeSenderId, likeRecieverId, token) => {
+    let config = {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        }
+    }
+
+
+    return new Promise(async (resolve, reject) => {
+        try{
+            const response = await server.post(`/pets/likes`,{likeSenderId, likeRecieverId}, config);
+            resolve(response.data);
+        }catch(e){
+            reject(e.response.data);
+        }
+    })
+}
+
+
+export const getLikesReq = async (pet_id, token) => {
+    let config = {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        }
+    }
+
+    return new Promise(async (resolve, reject) => {
+        try{
+            const response = await server.get(`/pets/likes?pet_id=${pet_id}`, config);
+            resolve(response.data);
+        }catch(e){
+            reject(e.response.data);
+        }
+
+    })
+}

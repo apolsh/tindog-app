@@ -20,7 +20,7 @@ const useStyles = makeStyles((theme) => ({
         height: '100vh',
     },
     image: {
-        backgroundImage: 'url(https://source.unsplash.com/featured/?dog,happy)',
+        backgroundImage: `url(${process.env.PUBLIC_URL + '/auth-logo.jpg'})`,
         backgroundRepeat: 'no-repeat',
         backgroundColor:
             theme.palette.type === 'light' ? theme.palette.grey[50] : theme.palette.grey[900],
