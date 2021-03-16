@@ -79,16 +79,29 @@ export const rkfCheckReq = async (code, number) => {
     })
 }
 
-export const addPetReq  = async (petName, isFemine, petBirthDate, codeKleimo, numberKleimo, rod_isConfirmed, petClub, city, dogKind, token) => {
+export const addPetReq  = async (petName, isFemine, petBirthDate, codeKleimo, numberKleimo, rod_isConfirmed, petClub, city, dogKind, avatar, token) => {
     let config = {
         headers: {
             Authorization: `Bearer ${token}`,
         }
     }
 
+    let formData = new FormData();
+    formData.append('petName', petName);
+    formData.append('isFemine', isFemine);
+    formData.append('petBirthDate', petBirthDate);
+    formData.append('codeKleimo',codeKleimo);
+    formData.append('numberKleimo',numberKleimo);
+    formData.append('rod_isConfirmed',rod_isConfirmed);
+    formData.append('petClub',petClub);
+    formData.append('city',city);
+    formData.append('dogKind', dogKind);
+    formData.append('avatar',avatar);
+
+
     return new Promise(async (resolve, reject) => {
         try{
-            const response = await server.post('/pets/add', {petName, isFemine, petBirthDate, codeKleimo, numberKleimo, rod_isConfirmed, petClub, city, dogKind}, config);
+            const response = await server.post('/pets/add', formData, config);
             resolve(response.data);
         }catch(e){
             reject(e.response.data);
@@ -107,6 +120,24 @@ export const getUserPetsReq = async (token) => {
     return new Promise(async (resolve, reject) => {
         try{
             const response = await server.get('/pets/ofUser', config);
+            resolve(response.data);
+        }catch(e){
+            reject(e.response.data);
+        }
+
+    })
+}
+
+export const searchCandidatesReq = async (pet_id, token) => {
+    let config = {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        }
+    }
+
+    return new Promise(async (resolve, reject) => {
+        try{
+            const response = await server.get(`/pets/searchCandidates?pet_id=${pet_id}`, config);
             resolve(response.data);
         }catch(e){
             reject(e.response.data);

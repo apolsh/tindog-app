@@ -18,7 +18,7 @@ router.post('/register', async (req, res) => {
 
     try{
         let check = await db.execute("SELECT t.user_id, t.email, t.pass FROM tind.user t WHERE t.email=?", [email])
-        if(check.length > 0 && check[0].length > 1){
+        if(check.length > 0 && check[0].length > 0){
             res.status(400).json({message:'Пользователь с указанной электронной почтой уже существует'})
         }else{
             const hashedPassword = await bcrypt.hash(password, 12);

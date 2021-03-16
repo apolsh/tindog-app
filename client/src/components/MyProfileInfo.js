@@ -3,6 +3,7 @@ import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
 import Typography from "@material-ui/core/Typography";
 
+
 export default function MyProfileInfo({userName, phone, email, birthDate}){
 
     const date = (new Date(birthDate))

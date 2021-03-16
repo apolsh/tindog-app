@@ -15,7 +15,7 @@ const useStyles = makeStyles({
     },
 });
 
-export default function MyDogCard({petName, isFemine, dogKind, codeKleimo, numberKleimo, rod_isConfirmed, petBirthDate, petClub, petCity}) {
+export default function MyDogCard({petName, isFemine, dogKind, codeKleimo, numberKleimo, rod_isConfirmed, petBirthDate, petClub, petCity, onSearchClick, avatar}) {
     const classes = useStyles();
     const date = (new Date(petBirthDate))
     let month = date.getUTCMonth() + 1; //months from 1-12
@@ -25,14 +25,15 @@ export default function MyDogCard({petName, isFemine, dogKind, codeKleimo, numbe
     day = day < 10 ? "0" + day.toString() : day;
     month = month < 10 ? "0" + month.toString() : month;
 
+    const image = avatar ? "/pets/avatar?img=" + avatar : process.env.PUBLIC_URL + '/no-image.png'
+
     return (
         <Card className={classes.root}>
             <CardActionArea>
                 <CardMedia
                     component="img"
                     alt="Contemplative Reptile"
-                    height="500"
-                    image={process.env.PUBLIC_URL + '/dog_mock.jpg'}
+                    image={image}
                     title="Contemplative Reptile"
                 />
                 <CardContent>
@@ -61,7 +62,7 @@ export default function MyDogCard({petName, isFemine, dogKind, codeKleimo, numbe
                         </Button>
                     </Grid>
                     <Grid item>
-                        <Button size="small" color="primary">
+                        <Button onClick={onSearchClick} size="small" color="primary">
                             Перейти к поиску партнёра
                         </Button>
                     </Grid>

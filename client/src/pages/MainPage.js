@@ -26,8 +26,18 @@ import MyDogListItem from "../components/MyDogListItem";
 import NewDogDialog from "../dialogs/NewDogDialog";
 import Button from "@material-ui/core/Button";
 import {AuthContext} from "../context/AuthContext";
-import {addPetReq, citiesDirReq, dogKindsDirReq, getUserPetsReq, userInfoReq} from "../apis/tindog";
+import {
+    addPetReq,
+    citiesDirReq,
+    dogKindsDirReq,
+    getUserPetsReq,
+    searchCandidatesReq,
+    userInfoReq
+} from "../apis/tindog";
 import MyProfileInfo from "../components/MyProfileInfo";
+import MyProfileListItem from "../components/MyProfileListItem";
+import SearchModeTabs from "../components/SearchModeTabs";
+import CandidateCard from "../components/CandidateCard";
 
 const drawerWidth = 340;
 
@@ -89,6 +99,9 @@ function MainPage(props) {
     const [dogKindsDir, setDogKindsDir] = React.useState([]);
     const [userPets, setUserPets] = React.useState([])
     const [selectedPetIndex, setSelectedPetIndex] = React.useState(0);
+    const [petCandidates, setPetCandidates] = React.useState([]);
+    const [viewedCandidateIndex, setViewedCandidateIndex] = React.useState(0);
+    const [candidatesAreOver, setCandidatesAreOver] = React.useState(false);
 
     const auth = useContext(AuthContext);
 
@@ -98,6 +111,9 @@ function MainPage(props) {
                 setUser(userData);
             })
             .catch(e=> {
+                if(e.code === "NOT_AUTHORIZED"){
+                    auth.logout();
+                }
                 onError(e.message)
             })
 
@@ -129,8 +145,8 @@ function MainPage(props) {
             .catch(e=>onError(e.message))
     }
 
-    const addPet = (petName, isFemine, petBirthDate, codeKleimo, numberKleimo, rod_isConfirmed, petClub, city, dogKind) => {
-        addPetReq(petName, isFemine, petBirthDate, codeKleimo, numberKleimo, rod_isConfirmed, petClub, city, dogKind, auth.token)
+    const addPet = (petName, isFemine, petBirthDate, codeKleimo, numberKleimo, rod_isConfirmed, petClub, city, dogKind, avatar) => {
+        addPetReq(petName, isFemine, petBirthDate, codeKleimo, numberKleimo, rod_isConfirmed, petClub, city, dogKind, avatar, auth.token)
             .then(result=>{
                 console.log(result);
                 updateUserPetList();
@@ -155,37 +171,63 @@ function MainPage(props) {
             <div className={classes.toolbar}>
             </div>
             <Divider />
-            <MyProfileInfo
-                userName={user.userName}
-                phone={user.phone}
-                email={user.email}
-                birthDate={user.birthDate}
+            {isProfileMode ?             <div>
+                <MyProfileInfo
+                    userName={user.userName}
+                    phone={user.phone}
+                    email={user.email}
+                    birthDate={user.birthDate}
                 />
-            <Divider />
-            <Typography variant="h6" noWrap style={{width:'100%', textAlign:'center'}}>
-                 <PetsIcon/>
-                Мои питомцы:
-                <PetsIcon/>
-            </Typography>
-            <div style={{textAlign:'center'}}>
-                <IconButton onClick={()=>setNewDogIsOpen(true)} className={classes.petControlIcons} color="primary" aria-label="upload picture" component="span">
-                    <AddCircleOutlineIcon />
-                </IconButton>
-                <IconButton className={classes.petControlIcons} color="secondary" aria-label="upload picture" component="span">
-                    <DeleteIcon />
-                </IconButton>
+                <Divider />
+                <Typography variant="h6" noWrap style={{width:'100%', textAlign:'center'}}>
+                    <PetsIcon/>
+                    Мои питомцы:
+                    <PetsIcon/>
+                </Typography>
+                <div style={{textAlign:'center'}}>
+                    <IconButton onClick={()=>setNewDogIsOpen(true)} className={classes.petControlIcons} color="primary" aria-label="upload picture" component="span">
+                        <AddCircleOutlineIcon />
+                    </IconButton>
+                    <IconButton className={classes.petControlIcons} color="secondary" aria-label="upload picture" component="span">
+                        <DeleteIcon />
+                    </IconButton>
+                </div>
+                <List component="nav"  aria-label="main mailbox folders">
+                    {userPets.map((pet,index)=><MyDogListItem
+                        selected={selectedPetIndex === index}
+                        onClick={()=>setSelectedPetIndex(index)}
+                        key={pet.petProfile_id}
+                        name={pet.petName}
+                        birthday={pet.petBirthDate}
+                        sex={pet.isFemine}
+                        image={pet.petAvatar}
+                    />)}
+                </List>
             </div>
-            <List component="nav"  aria-label="main mailbox folders">
-                {userPets.map((pet,index)=><MyDogListItem
-                    selected={selectedPetIndex === index}
-                    onClick={()=>setSelectedPetIndex(index)}
-                    key={pet.petProfile_id}
-                    name={pet.petName}
-                    birthday={pet.petBirthDate}
-                    sex={pet.isFemine}
-                    image={undefined}
-                />)}
-            </List>
+            :
+                <div>
+                    <List>
+                        <MyProfileListItem onClick={()=>setIsProfileMode(true)} key={user.userName} image={undefined} name={user.userName}/>
+                        <Divider />
+                        {userPets.length ?
+                            <MyDogListItem
+                                key={userPets[selectedPetIndex].petProfile_id}
+                                name={userPets[selectedPetIndex].petName}
+                                birthday={userPets[selectedPetIndex].petBirthDate}
+                                sex={userPets[selectedPetIndex].isFemine}
+                                image={userPets[selectedPetIndex].petAvatar}
+                                onClick={()=>setIsProfileMode(true)}
+                            /> : null
+                        }
+                        <Divider/>
+                        <SearchModeTabs/>
+                    </List>
+
+                </div>
+
+            }
+
+
 
         </div>
     );
@@ -196,22 +238,76 @@ function MainPage(props) {
         auth.logout();
     }
 
+    const onSearchClick = () => {
+
+        const selectedPet = userPets[selectedPetIndex]
+
+        setIsProfileMode(false);
+        searchCandidatesReq(selectedPet.petProfile_id, auth.token)
+            .then(r => setPetCandidates(r))
+    }
+
     const renderSelectedPet = (selectedPet)=>{
         const dogKind = dogKindsDir.find(kind=>kind.sprDogKind_id === selectedPet.dogKind_id);
         const dogCity = citiesDir.find(city=>city.city_id === selectedPet.petCity_id)
 
         return(
         <MyDogCard
-            petName={selectedPet.petName || ''}
-            isFemine={selectedPet.isFemine || ''}
-            dogKind={dogKind.nameRus || ''}
-            codeKleimo={selectedPet.codeKleimo || ''}
-            numberKleimo={selectedPet.numberKleimo || ''}
-            rod_isConfirmed={selectedPet.rod_isConfirmed || ''}
-            petBirthDate={selectedPet.petBirthDate || ''}
-            petClub={selectedPet.petClub || ''}
-            petCity={dogCity.cityName || ''}
+            petName={selectedPet.petName}
+            isFemine={selectedPet.isFemine}
+            dogKind={dogKind.nameRus}
+            codeKleimo={selectedPet.codeKleimo}
+            numberKleimo={selectedPet.numberKleimo }
+            rod_isConfirmed={selectedPet.rod_isConfirmed}
+            petBirthDate={selectedPet.petBirthDate}
+            petClub={selectedPet.petClub}
+            petCity={dogCity.cityName}
+            avatar={selectedPet.petAvatar}
+            onSearchClick = {onSearchClick}
         />)
+    }
+
+    const nextCandidate = () => {
+        let newCandidateIndex = viewedCandidateIndex + 1;
+        if(newCandidateIndex >= petCandidates.length){
+            setCandidatesAreOver(true);
+        }else{
+            setViewedCandidateIndex(newCandidateIndex)
+        }
+    }
+
+    const onLikeClick = () => {
+        //set like
+        nextCandidate();
+    }
+
+    const onDislikeClick = () => {
+        //set dislike
+        nextCandidate();
+    }
+
+    const renderCandidate = () => {
+        if(petCandidates.length > 0){
+            const candidate = petCandidates[viewedCandidateIndex]
+
+            if(candidatesAreOver){
+                return <Typography variant="h3">Увы, кандидаты закончились</Typography>
+            }
+
+            return (<CandidateCard petName={candidate.petName}
+                                   codeKleimo={candidate.codeKleimo}
+                                   numberKleimo={candidate.numberKleimo}
+                                   rod_isConfirmed={candidate.rod_isConfirmed}
+                                   petBirthDate={candidate.petBirthDate}
+                                   onLikeClick={onLikeClick}
+                                   onDislikeClick={onDislikeClick}
+                                   avatar={candidate.petAvatar}
+            />)
+        }else{
+            return <Typography  variant="h3">Увы, не удалось найти кандидатов</Typography>
+        }
+
+
     }
 
     return (
@@ -272,9 +368,15 @@ function MainPage(props) {
             <main className={classes.content}>
                 <div className={classes.toolbar} />
                 <Grid container justify="center">
-                    <Grid item>
+                    {isProfileMode ?                     <Grid item>
                         {userPets.length > 0 && citiesDir.length > 0 && dogKindsDir.length>0 ? renderSelectedPet(userPets[selectedPetIndex]) : null}
                     </Grid>
+                    :
+                        <Grid item>
+                            {renderCandidate()}
+                        </Grid>
+                    }
+
                 </Grid>
 
             </main>

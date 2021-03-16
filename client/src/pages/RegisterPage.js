@@ -12,7 +12,7 @@ import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
-import {InputAdornment} from "@material-ui/core";
+import {CircularProgress, InputAdornment, LinearProgress} from "@material-ui/core";
 import {registerReq} from "../apis/tindog";
 import ErrorDialog from "../dialogs/ErrorDialog";
 import SuccessDialog from "../dialogs/SuccessDialog";
@@ -55,6 +55,7 @@ export default function SignUp({onError}) {
     const [errorMessage, setErrorMessage] = useState('');
     const [errorFields, setErrorFields] = useState([]);
     const [successIsOpen, setSuccessIsOpen] = useState(false);
+    const [isRegLoading, setIsRegLoading] = useState(false);
 
     const isValidFields = () => {
         const fields = [username, email, phone, birthday, password, repeatedPassword];
@@ -103,6 +104,7 @@ export default function SignUp({onError}) {
 
     const onRegisterClick = () => {
         if(isValidFields()){
+            setIsRegLoading(true)
             registerReq(username, email, phone, birthday, password)
                 .then(result=>{
                     clearState();
@@ -113,8 +115,7 @@ export default function SignUp({onError}) {
                 .catch(e=> {
                     onError(e.message)
                 })
-        }else{
-
+                .finally(()=>setIsRegLoading(false))
         }
     }
 
@@ -149,6 +150,7 @@ export default function SignUp({onError}) {
                                 label="Имя"
                                 name="username"
                                 value={username}
+                                disabled={isRegLoading}
                                 onChange={e=>setUserName(e.target.value)}
                             />
                         </Grid>
@@ -161,6 +163,7 @@ export default function SignUp({onError}) {
                                 label="Электронная почта"
                                 name="email"
                                 value={email}
+                                disabled={isRegLoading}
                                 onChange={e=>setEmail(e.target.value)}
                             />
                         </Grid>
@@ -172,6 +175,7 @@ export default function SignUp({onError}) {
                                 name="phone"
                                 label="Телефон"
                                 id="phone"
+                                disabled={isRegLoading}
                                 InputProps={{
                                     startAdornment: <InputAdornment position="start">+7</InputAdornment>,
                                 }}
@@ -189,6 +193,7 @@ export default function SignUp({onError}) {
                                     shrink: true,
                                 }}
                                 value={birthday}
+                                disabled={isRegLoading}
                                 onChange={e=>setBirthday(e.target.value)}
                             />
                         </Grid>
@@ -202,6 +207,7 @@ export default function SignUp({onError}) {
                                 type="password"
                                 id="password"
                                 value={password}
+                                disabled={isRegLoading}
                                 onChange={e=>setPassword(e.target.value)}
                             />
                         </Grid>
@@ -215,21 +221,24 @@ export default function SignUp({onError}) {
                                 type="password"
                                 id="repeatPassword"
                                 value={repeatedPassword}
+                                disabled={isRegLoading}
                                 onChange={e=>setRepeatedPassword(e.target.value)}
                             />
                         </Grid>
                     </Grid>
-
+                {isRegLoading ? <LinearProgress style={{width: '100%',  marginTop:33, marginBottom:33 ,paddingBottom:10}}/> :
                     <Button
-                        type="submit"
-                        fullWidth
-                        variant="contained"
-                        color="primary"
-                        className={classes.submit}
-                        onClick={onRegisterClick}
-                    >
-                        Зарегистрироваться
-                    </Button>
+                    type="submit"
+                    fullWidth
+                    variant="contained"
+                    color="primary"
+                    className={classes.submit}
+                    disabled={isRegLoading}
+                    onClick={onRegisterClick}
+                >
+                    Зарегистрироваться
+                </Button>}
+
                     <Typography style={{fontStyle: 'italic'}} align="justify" variant="subtitle2" >
                         Нажимая кнопку "Зарегистрироваться" Вы даёте свое согласие на обработку введенной персональной информации в соответствии с Федеральным Законом №152-ФЗ от 27.07.2006 "О персональных данных"
                     </Typography>

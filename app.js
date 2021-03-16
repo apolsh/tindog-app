@@ -6,7 +6,6 @@ const config = require('config');
 const db = require('./database');
 var cors = require('cors')
 
-const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
 const authRouter = require('./routes/auth');
 const directoryRouter = require('./routes/directory');
@@ -22,7 +21,6 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 
-app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/auth', authRouter);
 app.use('/directory', directoryRouter);

@@ -18,10 +18,12 @@ export default function MyDogListItem ({name, birthday, sex, image, selected, on
     day = day < 10 ? "0" + day.toString() : day;
     month = month < 10 ? "0" + month.toString() : month;
 
+    let avatar = image? "/pets/avatar?img="+image : process.env.PUBLIC_URL + '/no-image.png';
+
     return (
-        <ListItem key={key} onClick={onClick} selected={selected} button alignItems="flex-start">
+        <ListItem key={key} onClick={onClick} selected={selected} button={!!onClick} alignItems="flex-start">
             <ListItemAvatar>
-                {image ? <Avatar alt="dogimage" src={image} /> : <PetsIcon fontSize="large" style={{ color: 'gray' }}/>}
+                {avatar ? <Avatar alt="dogimage" src={avatar} /> : <PetsIcon fontSize="large" style={{ color: 'gray' }}/>}
             </ListItemAvatar>
             <ListItemText
                 primary={<strong>{name}</strong>}

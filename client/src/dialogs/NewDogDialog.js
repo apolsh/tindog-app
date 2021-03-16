@@ -1,11 +1,13 @@
 import React, {useContext} from "react";
 import {
+    Avatar,
+    CircularProgress,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle, FormControl,
-    FormControlLabel, FormLabel, InputLabel, MenuItem,
-    Radio, RadioGroup, Select,
+    FormControlLabel, FormLabel, InputLabel, ListItemAvatar, MenuItem,
+    Radio, RadioGroup, Select, Typography,
     withStyles
 } from "@material-ui/core";
 import Grid from "@material-ui/core/Grid";
@@ -16,6 +18,8 @@ import CheckIcon from '@material-ui/icons/Check';
 import ClearIcon from '@material-ui/icons/Clear';
 import {addPetReq, rkfCheckReq} from "../apis/tindog";
 import {AuthContext} from "../context/AuthContext";
+import PetsIcon from "@material-ui/icons/Pets";
+import ListItem from "@material-ui/core/ListItem";
 
 const styles = theme => ({
     formControl: {
@@ -24,6 +28,19 @@ const styles = theme => ({
 })
 
 const numRe = /^\d+$/;
+
+const cleanState = {
+    petName:'',
+    isFemine:'0',
+    petBirthDate:'',
+    codeKleimo:'',
+    numberKleimo:'',
+    rod_isConfirmed: 0,
+    petClub: '',
+    city:'',
+    dogKind:'',
+    isRkfChecking: false
+}
 
 class NewDogDialog extends React.Component{
     constructor(props) {
@@ -38,16 +55,42 @@ class NewDogDialog extends React.Component{
             petClub: '',
             city:'',
             dogKind:'',
+            avatar: null,
+            avatarUrl: null,
+            isRkfChecking: false
         }
     }
 
+    componentDidUpdate(prevProps, prevState, snapshot) {
+            const { open } = this.props;
+            if (prevProps.open !== open && open===true) {
+                this.clearState();
+            }
+    }
+
+
     handleAcceptClick = ()=>{
-        const {petName, isFemine, petBirthDate, codeKleimo, numberKleimo, rod_isConfirmed, petClub, city, dogKind} = this.state;
+        const {petName, isFemine, petBirthDate, codeKleimo, numberKleimo, rod_isConfirmed, petClub, city, dogKind, avatar} = this.state;
         const {onAddPet, onError} = this.props;
 
         if(this.isValidFields()){
-            onAddPet(petName, isFemine, petBirthDate, codeKleimo, numberKleimo, rod_isConfirmed, petClub, city, dogKind)
+            onAddPet(petName, isFemine, petBirthDate, codeKleimo, numberKleimo, rod_isConfirmed, petClub, city, dogKind, avatar)
         }
+    }
+
+    clearState = () => {
+        this.setState({    petName:'',
+            isFemine:'0',
+            petBirthDate:'',
+            codeKleimo:'',
+            numberKleimo:'',
+            rod_isConfirmed: 0,
+            petClub: '',
+            city:'',
+            dogKind:'',
+            avatar: null,
+            avatarUrl: null,
+            isRkfChecking: false})
     }
 
     isValidFields = () => {
@@ -92,18 +135,44 @@ class NewDogDialog extends React.Component{
         const {codeKleimo, numberKleimo} = this.state;
         const {onError} = this.props;
 
+        this.setState({isRkfChecking: true})
         rkfCheckReq(codeKleimo, numberKleimo)
             .then(result=> {
                 this.setState({rod_isConfirmed: result.isConfirmed})
             })
-            .then(e=>onError(e))
+            .catch(e=>onError(e))
+            .finally(()=>this.setState({isRkfChecking: false}))
     }
 
+    renderRkfStatus(){
+        const {rod_isConfirmed} = this.state;
+
+        if(rod_isConfirmed){
+            return <CheckIcon  fontSize="large" style={{ color: 'green' }}/>
+        }
+        return <ClearIcon  fontSize="large" style={{ color: 'red' }}/>
+    }
+
+    handleCloseBtn = () => {
+        const { onClose } = this.props;
+        onClose();
+        // this.clearState();
+    }
+
+    handleAvatarChange = (event) =>{
+        const file = event.target.files[0]
+        const reader = new FileReader();
+        this.setState({avatar: file})
+        reader.onload = e => {
+            this.setState({avatarUrl: reader.result})
+        }
+        reader.readAsDataURL(file);
+    }
 
 
     render(){
         const {cities, dogKinds, open, onClose, classes} = this.props;
-        const {petName, isFemine, petBirthDate, codeKleimo, numberKleimo, rod_isConfirmed, petClub, city, dogKind} = this.state;
+        const {petName, isFemine, petBirthDate, codeKleimo, numberKleimo, rod_isConfirmed, petClub, city, dogKind, isRkfChecking, avatar, avatarUrl} = this.state;
 
         return (
             <Dialog disableBackdropClick={true} open={open} onClose={onClose} aria-labelledby="form-dialog-title">
@@ -184,11 +253,9 @@ class NewDogDialog extends React.Component{
                             />
                         </Grid>
                         <Grid item xs={12} sm={2}>
-                            {rod_isConfirmed ? <CheckIcon  fontSize="large" style={{ color: 'green' }}/>
-                            : <ClearIcon  fontSize="large" style={{ color: 'red' }}/>
-                            }
+                            {isRkfChecking ? <CircularProgress /> : this.renderRkfStatus() }
                         </Grid>
-                        <Button onClick={this.checkRkf} color="primary">
+                        <Button disabled={numberKleimo.length === 0 || codeKleimo.length === 0} onClick={this.checkRkf} color="primary">
                             Проверить клеймо
                         </Button>
                         <Divider/>
@@ -219,6 +286,17 @@ class NewDogDialog extends React.Component{
                                 </Select>
                             </FormControl>
                         </Grid>
+                        <Grid item xs={12}>
+                            <Typography>Добавьте фотографию питомца:</Typography>
+                        </Grid>
+                        <Grid item xs={12} sm={3} style={{textAlign: 'center'}}>
+                            <ListItemAvatar>
+                                {avatar ? <Avatar alt="dogimage" src={avatarUrl} /> : <PetsIcon fontSize="large" style={{ color: 'gray' }}/>}
+                            </ListItemAvatar>
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <input onChange={this.handleAvatarChange} type="file"/>
+                        </Grid>
 
 
 
@@ -228,10 +306,10 @@ class NewDogDialog extends React.Component{
 
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={onClose} color="primary">
+                    <Button onClick={this.handleCloseBtn} color="primary">
                         Отмена
                     </Button>
-                    <Button onClick={this.handleAcceptClick} color="primary">
+                    <Button onClick={this.handleAcceptClick} disabled={isRkfChecking} color="primary">
                         Добавить
                     </Button>
                 </DialogActions>
