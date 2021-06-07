@@ -8,6 +8,7 @@ import Typography from '@material-ui/core/Typography';
 import Box from '@material-ui/core/Box';
 import List from "@material-ui/core/List";
 import MyDogListItem from "./MyDogListItem";
+import Hidden from '@material-ui/core/Hidden';
 
 function TabPanel(props) {
     const { children, value, index, ...other } = props;
@@ -49,7 +50,10 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
-export default function SearchModeTabs({petLikes}) {
+export default function SearchModeTabs({petLikes, petMatches, chats, onTabChange, setSearchModeTab, selectedListItem, handleSearchModeTabListItemClick,
+                                           selectedPetItemListId, searchModeSelectedPet, setSearchModeSelectedPet, forceUpdateIndex, setForceUpdateIndex,
+                                           setSelectedPetItemListId}) {
+
     const classes = useStyles();
     const [value, setValue] = React.useState(0);
 
@@ -57,34 +61,91 @@ export default function SearchModeTabs({petLikes}) {
 
     const handleChange = (event, newValue) => {
         setValue(newValue);
+        onTabChange(newValue);
+        setSearchModeTab(newValue);
+        if(forceUpdateIndex!=null){
+            forceUpdateIndex=null;
+            setForceUpdateIndex(null);
+        }
     };
 
+    if(forceUpdateIndex!=null && value !==2){
+        handleChange(null, forceUpdateIndex);
+    }
+
     return (
-        <div className={classes.root}>
+        <div className={classes.root} key={new Date().getMilliseconds()}>
             <AppBar position="static">
                 <Tabs value={value} onChange={handleChange} aria-label="simple tabs example">
-                    <Tab style={{minWidth:105}} label="Совпадения" {...a11yProps(0)} />
-                    <Tab style={{minWidth:105}} label="Чаты" {...a11yProps(1)} />
-                    <Tab style={{minWidth:105}} label="Лайки" {...a11yProps(2)} />
+                    <Tab style={{minWidth:70}} label="Поиск" {...a11yProps(0)} />
+                    <Tab style={{minWidth:85}} label="Совпадения" {...a11yProps(1)} />
+                    <Tab style={{minWidth:75}} label="Чаты" {...a11yProps(2)} />
+                    <Tab style={{minWidth:90}} label="Поклонники" {...a11yProps(3)} />
                 </Tabs>
             </AppBar>
             <TabPanel value={value} index={0}>
-                В процессе разработки...
+                <Typography>
+                    Вам нравится этот питомец? Выберите вашу реакцию.
+                </Typography>
             </TabPanel>
             <TabPanel value={value} index={1}>
-                В процессе разработки...
+                <List component="nav"  aria-label="main mailbox folders">
+                    {petMatches.map((pet,index)=>{
+                        if(index===0 && !searchModeSelectedPet){
+                            setSearchModeSelectedPet(pet);
+                        }
+
+                        return <MyDogListItem
+                            //selected={selectedPetItemListId === index}
+                            onClick={()=>handleSearchModeTabListItemClick(index, pet.petProfile_id)}
+                            key={pet.petProfile1_id}
+                            name={pet.petName}
+                            birthday={pet.petBirthDate}
+                            sex={pet.isFemine}
+                            image={pet.petAvatar}
+                            selected={index===selectedPetItemListId}
+                        />
+                    })}
+                </List>
             </TabPanel>
             <TabPanel value={value} index={2}>
                 <List component="nav"  aria-label="main mailbox folders">
-                    {petLikes.map((pet,index)=><MyDogListItem
-                        selected={selectedPetIndex === index}
-                        onClick={()=>setSelectedPetIndex(index)}
-                        key={pet.petProfile_id}
-                        name={pet.petName}
-                        birthday={pet.petBirthDate}
-                        sex={pet.isFemine}
-                        image={pet.petAvatar}
-                    />)}
+                    {chats.map((pet,index)=>{
+                        if(index===0 && !searchModeSelectedPet){
+                            setSearchModeSelectedPet(pet);
+                        }
+
+                        return <MyDogListItem
+                            //selected={selectedPetItemListId === index}
+                            onClick={()=>handleSearchModeTabListItemClick(index, pet.petProfile_id)}
+                            key={pet.petProfile_id}
+                            name={pet.petName}
+                            birthday={pet.petBirthDate}
+                            sex={pet.isFemine}
+                            image={pet.petAvatar}
+                            selected={index===selectedPetItemListId}
+                        />
+                    })}
+                </List>
+            </TabPanel>
+            <TabPanel value={value} index={3}>
+                <List component="nav"  aria-label="main mailbox folders">
+                    {petLikes.map((pet,index)=>{
+                        if(index===0 && !searchModeSelectedPet){
+                            setSearchModeSelectedPet(pet);
+                        }
+
+                        return <MyDogListItem
+                            //selected={selectedPetIndex === index}
+                            onClick={()=>handleSearchModeTabListItemClick(index, pet.petProfile_id)}
+                            key={pet.petProfile_id}
+                            name={pet.petName}
+                            birthday={pet.petBirthDate}
+                            sex={pet.isFemine}
+                            image={pet.petAvatar}
+                            selected={index===selectedPetItemListId}
+                        />
+                    })}
                 </List>
             </TabPanel>
         </div>

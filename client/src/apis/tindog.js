@@ -153,7 +153,6 @@ export const addLike = async (likeSenderId, likeRecieverId, token) => {
         }
     }
 
-
     return new Promise(async (resolve, reject) => {
         try{
             const response = await server.post(`/pets/likes`,{likeSenderId, likeRecieverId}, config);
@@ -164,6 +163,22 @@ export const addLike = async (likeSenderId, likeRecieverId, token) => {
     })
 }
 
+export const addDisLike = async (disLikeSenderId, disLikeRecieverId, token) => {
+    let config = {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        }
+    }
+
+    return new Promise(async (resolve, reject) => {
+        try{
+            const response = await server.post(`/pets/dislikes`,{disLikeSenderId, disLikeRecieverId}, config);
+            resolve(response.data);
+        }catch(e){
+            reject(e.response.data);
+        }
+    })
+}
 
 export const getLikesReq = async (pet_id, token) => {
     let config = {
@@ -175,6 +190,95 @@ export const getLikesReq = async (pet_id, token) => {
     return new Promise(async (resolve, reject) => {
         try{
             const response = await server.get(`/pets/likes?pet_id=${pet_id}`, config);
+            resolve(response.data);
+        }catch(e){
+            reject(e.response.data);
+        }
+
+    })
+}
+
+export const getMatchesReq = async (pet_id, token) => {
+    let config = {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        }
+    }
+
+    return new Promise(async (resolve, reject) => {
+        try{
+            const response = await server.get(`/pets/matches?pet_id=${pet_id}`, config);
+            resolve(response.data);
+        }catch(e){
+            reject(e.response.data);
+        }
+
+    })
+}
+
+export const getChatsReq = async (pet_id, token) => {
+    let config = {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        }
+    }
+
+    return new Promise(async (resolve, reject) => {
+        try{
+            const response = await server.get(`/pets/chats?pet_id=${pet_id}`, config);
+            resolve(response.data);
+        }catch(e){
+            reject(e.response.data);
+        }
+
+    })
+}
+
+export const getChatLinesReq = async (chat_id, token) => {
+    let config = {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        }
+    }
+
+    return new Promise(async (resolve, reject) => {
+        try{
+            const response = await server.get(`/pets/chatLinesByChatId?chat_id=${chat_id}`, config);
+            resolve(response.data);
+        }catch(e){
+            reject(e.response.data);
+        }
+
+    })
+}
+
+export const sendChatMessageByChatId = async (chatID, myPetId, myMessage, token) => {
+    let config = {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        }
+    }
+
+    return new Promise(async (resolve, reject) => {
+        try{
+            const response = await server.post(`/pets/chatLinesByChatId`,{chatID, myPetId, myMessage}, config);
+            resolve(response.data);
+        }catch(e){
+            reject(e.response.data);
+        }
+    })
+}
+
+export const getChatIdReq = async (pet_id1, pet_id2, token) => {
+    let config = {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        }
+    }
+
+    return new Promise(async (resolve, reject) => {
+        try{
+            const response = await server.get(`/pets/chatLinesByPetsId?pet_id1=${pet_id1}&pet_id2=${pet_id2}`, config);
             resolve(response.data);
         }catch(e){
             reject(e.response.data);

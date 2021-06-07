@@ -28,19 +28,24 @@ import Button from "@material-ui/core/Button";
 import {AuthContext} from "../context/AuthContext";
 import {
     addLike,
+    addDisLike,
     addPetReq,
     citiesDirReq,
-    dogKindsDirReq, getLikesReq,
+    dogKindsDirReq, getLikesReq, getMatchesReq, getChatsReq,
     getUserPetsReq,
     searchCandidatesReq,
-    userInfoReq
+    userInfoReq, getChatLinesReq, sendChatMessageByChatId, getChatIdReq
 } from "../apis/tindog";
 import MyProfileInfo from "../components/MyProfileInfo";
 import MyProfileListItem from "../components/MyProfileListItem";
 import SearchModeTabs from "../components/SearchModeTabs";
 import CandidateCard from "../components/CandidateCard";
+import ImageSearchIcon from '@material-ui/icons/ImageSearch';
+import ClearIcon from "@material-ui/icons/Clear";
+import ChatBox from "../components/chat/ChatBox";
+import RefreshIcon from '@material-ui/icons/Refresh';
 
-const drawerWidth = 340;
+const drawerWidth = 400;
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -104,6 +109,13 @@ function MainPage(props) {
     const [viewedCandidateIndex, setViewedCandidateIndex] = React.useState(0);
     const [candidatesAreOver, setCandidatesAreOver] = React.useState(false);
     const [likes, setLikes] = React.useState([]);
+    const [matches, setMatches] = React.useState([]);
+    const [chats, setChats] = React.useState([]);
+    const [searchModeTab, setSearchModeTab] = React.useState(null);
+    const [selectedPetItemListId, setSelectedPetItemListId] = React.useState(0);
+    const [searchModeSelectedPet, setSearchModeSelectedPet] = React.useState(null);
+    const [chatMessages, setChatMessages] = React.useState([]);
+    const [forceUpdateIndex, setForceUpdateIndex] = React.useState(null);
 
     const auth = useContext(AuthContext);
 
@@ -134,7 +146,6 @@ function MainPage(props) {
             .catch(e=>onError(e.message))
 
         updateUserPetList();
-
 
     },[])
 
@@ -168,6 +179,53 @@ function MainPage(props) {
         setSelectedPetIndex(index);
     };
 
+    const onTabChange = tabIndex => {
+        setSelectedPetItemListId(0);
+        setSearchModeSelectedPet(null);
+        const selectedPet = userPets[selectedPetIndex]
+        setSearchModeTab(tabIndex);
+
+        switch (tabIndex){
+            //update candidates
+            case 0:
+                searchCandidatesReq(selectedPet.petProfile_id, auth.token)
+                    .then(r => setPetCandidates(r))
+                break;
+            //update matches
+            case 1:
+                getMatchesReq(selectedPet.petProfile_id, auth.token)
+                    .then(r=>setMatches(r))
+                break;
+            //update chats
+            case 2:
+                getChatsReq(selectedPet.petProfile_id, auth.token)
+                    .then(r=>{
+                        setChats(r);
+                        if(r){
+                            getChatLinesReq(r[0].chat_id, auth.token)
+                                .then(messages=>{
+                                    setChatMessages(messages);
+                                })
+                        }
+                    })
+                break;
+            //update likes
+            case 3:
+                getLikesReq(selectedPet.petProfile_id, auth.token)
+                    .then(r => setLikes(r))
+                break;
+        }
+    };
+
+    const handleSearchModeTabListItemClick = (index, item)=>{
+        setSelectedPetItemListId(index);
+        setSearchModeSelectedPet(item);
+    }
+
+    const forceUpdateMode = (index, updateCallback)=>{
+        updateCallback(index);
+    }
+
     const drawer = (
         <div>
             <div className={classes.toolbar}>
@@ -190,7 +248,7 @@ function MainPage(props) {
                     <IconButton onClick={()=>setNewDogIsOpen(true)} className={classes.petControlIcons} color="primary" aria-label="upload picture" component="span">
                         <AddCircleOutlineIcon />
                     </IconButton>
-                    <IconButton className={classes.petControlIcons} color="secondary" aria-label="upload picture" component="span">
+                    <IconButton disabled={true} className={classes.petControlIcons} color="secondary" aria-label="upload picture" component="span">
                         <DeleteIcon />
                     </IconButton>
                 </div>
@@ -218,19 +276,40 @@ function MainPage(props) {
                                 birthday={userPets[selectedPetIndex].petBirthDate}
                                 sex={userPets[selectedPetIndex].isFemine}
                                 image={userPets[selectedPetIndex].petAvatar}
-                                onClick={()=>setIsProfileMode(true)}
+                                onClick={()=>{
+                                    setIsProfileMode(true)
+                                }  }
                             /> : null
                         }
                         <Divider/>
-                        <SearchModeTabs petLikes={likes}/>
+                        <div style={{textAlign:'center'}}>
+                            <Button
+                                onClick={()=>setSearchModeTab(-1)}
+                                variant="contained"
+                                color="primary"
+                                className={classes.button}
+                                startIcon={<RefreshIcon />}
+                            >
+                                Обновить
+                            </Button>
+                        </div>
+                            <Divider/>
+                        <SearchModeTabs petLikes={likes}
+                                        chats={chats}
+                                        petMatches = {matches}
+                                        setSearchModeTab = {setSearchModeTab}
+                                        onTabChange={onTabChange}
+                                        selectedPetItemListId = {selectedPetItemListId}
+                                        handleSearchModeTabListItemClick={handleSearchModeTabListItemClick}
+                                        setSelectedPetItemListId={setSelectedPetItemListId}
+                                        searchModeSelectedIPet={searchModeSelectedPet}
+                                        setSearchModeSelectedPet={setSearchModeSelectedPet}
+                                        forceUpdateIndex={forceUpdateIndex}
+                                        setForceUpdateIndex={setForceUpdateIndex}
+                        />
                     </List>
-
                 </div>
-
             }
-
-
-
         </div>
     );
 
@@ -247,9 +326,15 @@ function MainPage(props) {
         setIsProfileMode(false);
         searchCandidatesReq(selectedPet.petProfile_id, auth.token)
             .then(r => setPetCandidates(r))
-
-        getLikesReq(selectedPet.petProfile_id, auth.token)
-            .then(r => setLikes(r))
+        //
+        // getLikesReq(selectedPet.petProfile_id, auth.token)
+        //     .then(r => setLikes(r))
+        //
+        // getMatchesReq(selectedPet.petProfile_id, auth.token)
+        //     .then(r=>setMatches(r))
+        //
+        // getChatsReq(selectedPet.petProfile_id, auth.token)
+        //     .then(r=>setChats(r))
     }
 
     const renderSelectedPet = (selectedPet)=>{
@@ -291,39 +376,141 @@ function MainPage(props) {
         nextCandidate();
     }
 
-    const onDislikeClick = () => {
+    const onSendMessage = (message) => {
+        const selectedChatId = chats[selectedPetItemListId].chat_id;
+        const selectedPet = userPets[selectedPetIndex]
+        const disLikeSenderId = selectedPet.petProfile_id;
+
+
+        sendChatMessageByChatId(selectedChatId, disLikeSenderId, message, auth.token)
+            .then(response=>{
+                getChatLinesReq(selectedChatId, auth.token)
+                    .then(messages=>{
+                        setChatMessages(messages);
+                    })
+            })
+    }
+
+    const onDislikeClick = (disLikeRecieverId) => {
         //set dislike
+        //работает только со списком поиска - потому что массив здесь userPets
+        const selectedPet = userPets[selectedPetIndex]
+        const disLikeSenderId = selectedPet.petProfile_id;
+        addDisLike(disLikeSenderId, disLikeRecieverId, auth.token)
+            .then(()=>{})
+            .catch(e=>onError(e.message))
         nextCandidate();
     }
 
-    const renderCandidate = () => {
-        if(petCandidates.length > 0){
-            const candidate = petCandidates[viewedCandidateIndex]
+    const onDislikeClickFromLikes = (disLikeRecieverId) => {
+        //set dislike
+        //работает только со списком лайков
+        //исправить
+        const selectedPet = likes[selectedPetItemListId]
+        const disLikeSenderId = selectedPet.petProfile_id;
+        addDisLike(disLikeSenderId, disLikeRecieverId, auth.token)
+            .then(()=>{})
+            .catch(e=>onError(e.message))
+    }
 
-            if(candidatesAreOver){
-                return <Typography variant="h3">Увы, кандидаты закончились</Typography>
-            }
+    const onDislikeClickFromMatches = (disLikeRecieverId) => {
+        //set dislike
+        //работает только со списком матчей
+        //исправить
+        const selectedPet = matches[selectedPetItemListId]
+        const disLikeSenderId = selectedPet.petProfile_id;
+        addDisLike(disLikeSenderId, disLikeRecieverId, auth.token)
+            .then(()=>{})
+            .catch(e=>onError(e.message))
+    }
 
-            return (<CandidateCard petName={candidate.petName}
-                                   petProfile_id={candidate.petProfile_id}
-                                   codeKleimo={candidate.codeKleimo}
-                                   numberKleimo={candidate.numberKleimo}
-                                   rod_isConfirmed={candidate.rod_isConfirmed}
-                                   petBirthDate={candidate.petBirthDate}
-                                   onLikeClick={onLikeClick}
-                                   onDislikeClick={onDislikeClick}
-                                   avatar={candidate.petAvatar}
-            />)
-        }else{
-            return <Typography  variant="h3">Увы, не удалось найти кандидатов</Typography>
-        }
+    const getChatId = (candidateId) => {
+        const selectedPet = userPets[selectedPetIndex]
+        const myPetId = selectedPet.petProfile_id;
 
+        getChatIdReq(myPetId, candidateId, auth.token)
+            .then(result=>{
+                console.log(result);
+                setForceUpdateIndex(2);
+            })
+            .catch(e=>onError(e.message))
 
     }
 
+    const renderCandidate = () => {
+        //исправить
+        switch (searchModeTab){
+            case 0:
+                if(petCandidates.length > 0){
+                    const candidate = petCandidates[viewedCandidateIndex]
+
+                    if(candidatesAreOver){
+                        return <Typography variant="h3">Увы, кандидаты закончились</Typography>
+                    }
+                    return (
+                        <CandidateCard petName={candidate.petName}
+                                       petProfile_id={candidate.petProfile_id}
+                                       codeKleimo={candidate.codeKleimo}
+                                       numberKleimo={candidate.numberKleimo}
+                                       rod_isConfirmed={candidate.rod_isConfirmed}
+                                       petBirthDate={candidate.petBirthDate}
+                                       onLikeClick={onLikeClick}
+                                       onDislikeClick={onDislikeClick}
+                                       avatar={candidate.petAvatar}
+                                       searchModeTabIndex={searchModeTab}
+                        />
+                    )
+                }else{
+                    return <Typography  variant="h3">Увы, не удалось найти кандидатов</Typography>
+                }
+            case 1:
+                if(matches.length > 0){
+                    const matchSelected = matches[selectedPetItemListId]
+                    return(
+                        <CandidateCard petName={matchSelected.petName}
+                                       petProfile_id={matchSelected.petProfile1_id}
+                                       codeKleimo={matchSelected.codeKleimo}
+                                       numberKleimo={matchSelected.numberKleimo}
+                                       rod_isConfirmed={matchSelected.rod_isConfirmed}
+                                       petBirthDate={matchSelected.petBirthDate}
+                                       onLikeClick={onLikeClick}
+                                       onDislikeClick={onDislikeClickFromMatches}
+                                       avatar={matchSelected.petAvatar}
+                                       searchModeTabIndex={searchModeTab}
+                                       getChatId={getChatId}
+                        />
+                    )
+                }else{
+                    return <Typography  variant="h3">Увы, у вашего питомца еще нет сопадений</Typography>
+                }
+            case 2:
+                let selectedPet = userPets ? userPets[selectedPetIndex].petProfile_id : null;
+                return <ChatBox onSendMessage={onSendMessage} chatMessages={chatMessages} owner={selectedPet} sendMessageCb={console.log} getChatLinesCallback={console.log}/>
+                break;
+            case 3:
+                if (likes.length > 0) {
+                    const likePetSelected = likes[selectedPetItemListId]
+                    return (
+                        <CandidateCard petName={likePetSelected.petName}
+                                       petProfile_id={likePetSelected.petProfile_id}
+                                       codeKleimo={likePetSelected.codeKleimo}
+                                       numberKleimo={likePetSelected.numberKleimo}
+                                       rod_isConfirmed={likePetSelected.rod_isConfirmed}
+                                       petBirthDate={likePetSelected.petBirthDate}
+                                       onLikeClick={onLikeClick}
+                                       onDislikeClick={onDislikeClickFromLikes}
+                                       avatar={likePetSelected.petAvatar}
+                                       searchModeTabIndex={searchModeTab}
+                        />
+                    )
+                } else {
+                    return <Typography variant="h3">Увы, у вашего питомца еще нет лайков</Typography>
+                }
+
+        }}
+
+
     return (
-
-
         <div className={classes.root}>
             <NewDogDialog onAddPet={addPet} onError={onError} cities={citiesDir} dogKinds={dogKindsDir} open={newDogIsOpen} onClose={()=>setNewDogIsOpen(false)}/>
             <CssBaseline />
@@ -339,7 +526,7 @@ function MainPage(props) {
                         <MenuIcon />
                     </IconButton>
                     <Typography variant="h6" noWrap>
-                        {isProfileMode ? "Профиль" : "Поиск"}
+                        {isProfileMode ? "Профиль" : "Карточки питомцев"}
                     </Typography>
                     <Button color="inherit" onClick={logout}>Выйти</Button>
                 </Toolbar>
@@ -378,15 +565,21 @@ function MainPage(props) {
             </nav>
             <main className={classes.content}>
                 <div className={classes.toolbar} />
-                <Grid container justify="center">
+                <Grid container alignItems="center" justify="center">
                     {isProfileMode ?                     <Grid item>
                         {userPets.length > 0 && citiesDir.length > 0 && dogKindsDir.length>0 ? renderSelectedPet(userPets[selectedPetIndex]) : null}
                     </Grid>
                     :
                         <Grid item>
                             {renderCandidate()}
+                            {/*chatbox */}
+                            {/*<Grid item>*/}
+                            {/*    <ChatBox sendMessageCb={console.log} getChatLinesCallback={console.log}/>*/}
+                            {/*</Grid>*/}
                         </Grid>
                     }
+
+
 
                 </Grid>
 

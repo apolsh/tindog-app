@@ -15,7 +15,8 @@ const useStyles = makeStyles({
     },
 });
 
-export default function MyDogCard({petName, isFemine, dogKind, codeKleimo, numberKleimo, rod_isConfirmed, petBirthDate, petClub, petCity, onSearchClick, avatar}) {
+export default function MyDogCard({petName, isFemine, dogKind, codeKleimo, numberKleimo,
+                                      rod_isConfirmed, petBirthDate, petClub, petCity, onSearchClick, avatar}) {
     const classes = useStyles();
     const date = (new Date(petBirthDate))
     let month = date.getUTCMonth() + 1; //months from 1-12
@@ -57,7 +58,7 @@ export default function MyDogCard({petName, isFemine, dogKind, codeKleimo, numbe
                       direction="row"
                       justify="space-between" >
                     <Grid item>
-                        <Button size="small" color="secondary">
+                        <Button disabled={true} size="small" color="secondary">
                             Убрать из поиска
                         </Button>
                     </Grid>

@@ -1,4 +1,4 @@
-import React from 'react';
+import {React} from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import Card from '@material-ui/core/Card';
 import CardActionArea from '@material-ui/core/CardActionArea';
@@ -12,6 +12,7 @@ import IconButton from "@material-ui/core/IconButton";
 import FavoriteIcon from '@material-ui/icons/Favorite';
 import ClearIcon from '@material-ui/icons/Clear';
 import {getDefaultDateString} from "../utils/date";
+import ChatIcon from '@material-ui/icons/Chat';
 
 const useStyles = makeStyles({
     root: {
@@ -19,7 +20,10 @@ const useStyles = makeStyles({
     },
 });
 
-export default function CandidateCard({petProfile_id, petName, codeKleimo, numberKleimo, rod_isConfirmed, petBirthDate, onLikeClick, onDislikeClick, avatar }) {
+export default function CandidateCard({petProfile_id, petName, codeKleimo,
+                                          numberKleimo, rod_isConfirmed, petBirthDate,
+                                          onLikeClick, onDislikeClick, avatar, searchModeTabIndex,getChatId }) {
+
     const classes = useStyles();
 
     const birthdayDate = getDefaultDateString(petBirthDate);
@@ -32,7 +36,7 @@ export default function CandidateCard({petProfile_id, petName, codeKleimo, numbe
                 <CardMedia
                     component="img"
                     alt="Contemplative Reptile"
-                    height="500"
+                    height="450"
                     image={image}
                     title="Contemplative Reptile"
                 />
@@ -47,6 +51,7 @@ export default function CandidateCard({petProfile_id, petName, codeKleimo, numbe
                     </Typography>
                 </CardContent>
             </CardActionArea>
+
             <CardActions>
                 <Grid container
                       direction="row"
@@ -57,13 +62,22 @@ export default function CandidateCard({petProfile_id, petName, codeKleimo, numbe
                             color="primary"
                             className={classes.button}
                             startIcon={<ClearIcon  />}
-                            onClick={onDislikeClick}
+                            onClick={()=>onDislikeClick(petProfile_id)}
                         >
                             Не нравится
                         </Button>
                     </Grid>
                     <Grid item>
-                        <Button
+                        {searchModeTabIndex===1 ? (<Button
+                            variant="contained"
+                            style={{backgroundColor:'#00cc66'}}
+                            color="secondary"
+                            className={classes.button}
+                            startIcon={<ChatIcon  />}
+                            onClick={()=>getChatId(petProfile_id)}
+                        >
+                            Перейти в чат
+                        </Button>) : (<Button
                             variant="contained"
                             color="secondary"
                             className={classes.button}
@@ -71,11 +85,9 @@ export default function CandidateCard({petProfile_id, petName, codeKleimo, numbe
                             onClick={()=>onLikeClick(petProfile_id)}
                         >
                             Нравится
-                        </Button>
+                        </Button>)}
                     </Grid>
                 </Grid>
-
-
             </CardActions>
         </Card>
     );
